@@ -1,0 +1,256 @@
+        :root {
+            --primary-green: #047f38;
+            --dark-green: #047f38;
+            --light-bg: #f4f7f6;
+            --white: #ffffff;
+            --text-dark: #2c3e50;
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        /* --- Header --- */
+        header {
+            background: var(--white);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: .8rem;
+            color: var(--dark-green);
+            display: flex;
+            gap: 3px;
+        }
+
+        .logo img{
+            filter: invert(50%) sepia(100%) saturate(500%) hue-rotate(62deg) brightness(0.7);
+        }
+
+        /* --- Layout Principal --- */
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 2rem;
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        /* --- Sección del Video --- */
+        .main-content .video-wrapper {
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .video-wrapper iframe {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+        }
+
+        .video-info {
+            margin-top: 1.5rem;
+            background: var(--white);
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+
+        .video-info h1 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        /* --- Material de Apoyo --- */
+        .download-section {
+            margin-top: 2rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .file-card {
+            background: var(--white);
+            padding: 1.2rem;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            text-decoration: none;
+            color: var(--text-dark);
+            border: 2px solid transparent;
+            transition: var(--transition);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+
+        .file-card:hover {
+            border-color: var(--primary-green);
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(46, 204, 113, 0.2);
+        }
+
+        .file-card i {
+            font-size: 1.5rem;
+            color: var(--primary-green);
+        }
+
+        .file-card div span {
+            display: block;
+            font-size: 0.8rem;
+            color: #7f8c8d;
+        }
+
+        /* --- Sidebar de Videos Relacionados --- */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            height: 100vh;
+            overflow: auto;
+        }
+
+        .sidebar-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .related-card {
+            display: flex;
+            gap: 10px;
+            background: var(--white);
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .related-card:hover {
+            background: #e8f8f0;
+        }
+
+        .thumb-mini {
+            width: 120px;
+            height: 68px;
+            background: #ddd;
+            border-radius: 4px;
+            flex-shrink: 0;
+            object-fit: cover;
+            filter: invert(0) sepia(36%) saturate(460%) hue-rotate(97deg);
+        }
+
+        .related-info h4 {
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* --- Estilos de la Barra de Búsqueda --- */
+        .search-wrapper {
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: #f1f3f4;
+            padding: 5px;
+            border-radius: 50px;
+            width: 45px; /* Tamaño inicial (solo círculo del botón) */
+            height: 45px;
+            transition: var(--transition);
+            overflow: hidden;
+            border: 2px solid transparent;
+        }
+
+        /* Clase que se activará con JS */
+        .search-box.active {
+            width: 350px; /* Ancho expandido */
+            background: var(--white);
+            border-color: var(--primary-green);
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.2);
+        }
+
+        .search-input {
+            width: 100%;
+            border: none;
+            background: none;
+            outline: none;
+            padding: 0;
+            font-size: 0.95rem;
+            transition: var(--transition);
+            opacity: 0;
+            margin-left: 10px;
+        }
+
+        .search-box.active .search-input {
+            opacity: 1;
+            padding: 5px 10px;
+        }
+
+        .search-btn {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            border: none;
+            background: transparent;
+            color: var(--text-dark);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            flex-shrink: 0;
+        }
+
+        .search-box.active .search-btn {
+            background: var(--primary-green);
+            color: white;
+        }
+
+        /* Efecto de pulso al pasar el mouse por el botón cerrado */
+        .search-box:not(.active):hover {
+            background: #e8f8f0;
+            transform: scale(1.05);
+        }
+
+        /* --- Animaciones --- */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Responsivo --- */
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+            .sidebar {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            }
+        }
