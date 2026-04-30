@@ -66,7 +66,7 @@
 
         // Cargar y parsear el archivo Excel (devuelve una promesa con el índice plano)
         function cargarIndice() {
-          return fetch("ÍNDICE DE PROCESOS_Web.xlsx")
+          return fetch("https://pronamex.github.io/%C3%8DNDICE%20DE%20PROCESOS_Web.xlsx");
             .then((response) => {
               if (!response.ok)
                 throw new Error("No se pudo cargar el archivo Excel");
