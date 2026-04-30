@@ -1,0 +1,426 @@
+      (function () {
+        // Obtener parámetros de la URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const searchTerm = urlParams.get("search");
+        const id = urlParams.get("id") || urlParams.get("ID");
+
+        // Función para mostrar errores
+        function mostrarError(mensaje) {
+          document.getElementById("videoTitle").textContent = "Error";
+          document.getElementById("videoDescription").textContent = mensaje;
+          document.getElementById("videoWrapper").innerHTML =
+            `<video controls autoplay><source src="https://www.pronamexsacv.com.mx/Videos/placeholder_Ayuda.mp4" type="video/mp4"></video>`;
+          document.getElementById("downloadSection").innerHTML = "";
+          document.getElementById("relatedContainer").innerHTML =
+            "<p>No hay videos relacionados.</p>";
+        }
+
+        // Función para mostrar resultados de búsqueda
+        function mostrarResultados(termino, listaProcesos) {
+          const mainContent = document.querySelector(".main-content");
+          const sidebar = document.querySelector(".sidebar");
+          const videoWrapper = document.getElementById("videoWrapper");
+          const videoInfo = document.querySelector(".video-info");
+          const relatedContainer = document.getElementById("relatedContainer");
+
+          // Ocultar el video y su información
+          if (videoWrapper) videoWrapper.style.display = "none";
+          if (videoInfo) videoInfo.style.display = "none";
+
+          // Limpiar el sidebar de videos relacionados y mostrar los resultados
+          relatedContainer.innerHTML = "";
+
+          if (listaProcesos.length === 0) {
+            relatedContainer.innerHTML = `<p>No se encontraron resultados para "${termino}".</p>`;
+            return;
+          }
+
+          const titulo = document.createElement("h3");
+          titulo.textContent = `Resultados para "${termino}" (${listaProcesos.length})`;
+          relatedContainer.appendChild(titulo);
+
+          listaProcesos.forEach((proceso) => {
+            // Determinar el ID para enlazar (prioridad: VD, PR, DF)
+            let idEnlace = proceso.VD || proceso.PR || proceso.DF;
+            if (!idEnlace) return; // Si no tiene ningún código, no se puede enlazar
+
+            // Extraer el código numérico (ej. 01-001) para la URL
+            const match = idEnlace.match(/\d{2}-\d{3}/);
+            if (!match) return; // Si no tiene formato esperado, no se muestra
+            idEnlace = match[0];
+
+            const card = document.createElement("a");
+            card.href = `?id=${idEnlace}`;
+            card.className = "related-card"; // Reutilizamos el estilo de las tarjetas relacionadas
+            card.style.marginBottom = "10px";
+            card.innerHTML = `
+                <div class="related-info">
+                    <h4>${proceso.nombre}</h4>
+                    <p>${proceso.descripcion || "Sin descripción"}</p>
+                    <small>Categoría: ${proceso.categoria}</small>
+                </div>
+            `;
+            relatedContainer.appendChild(card);
+          });
+        }
+
+        // Cargar y parsear el archivo Excel (devuelve una promesa con el índice plano)
+        function cargarIndice() {
+          return fetch("ÍNDICE DE PROCESOS_Web.xlsx")
+            .then((response) => {
+              if (!response.ok)
+                throw new Error("No se pudo cargar el archivo Excel");
+              return response.arrayBuffer();
+            })
+            .then((data) => {
+              const workbook = XLSX.read(data, { type: "array" });
+              const hoja = workbook.Sheets[workbook.SheetNames[0]];
+              const filas = XLSX.utils.sheet_to_json(hoja, {
+                header: 1,
+                defval: "",
+              });
+
+              // Identificar encabezados de columna (primera fila)
+              const encabezados = filas[0] || [];
+              const colIndex = {
+                NOMBRE: encabezados.findIndex(
+                  (h) => h && h.trim() === "NOMBRE",
+                ),
+                PROCEDIMIENTO: encabezados.findIndex(
+                  (h) => h && h.trim() === "PROCEDIMIENTO",
+                ),
+                DIAGRAMA_DE_FLUJO: encabezados.findIndex(
+                  (h) => h && h.trim() === "DIAGRAMA DE FLUJO",
+                ),
+                VIDEO: encabezados.findIndex((h) => h && h.trim() === "VIDEO"),
+                DESCRIPCION: encabezados.findIndex(
+                  (h) => h && h.trim() === "DESCRIPCIÓN",
+                ),
+                CATEGORIA: encabezados.findIndex(
+                  (h) => h && h.trim() === "CATEGORÍA",
+                ),
+              };
+
+              const procesos = []; // Lista plana de procesos
+              const indice = {}; // Índice agrupado para la vista normal
+
+              for (let i = 1; i < filas.length; i++) {
+                const row = filas[i];
+                if (!row || row.length === 0) continue;
+
+                const nombre =
+                  colIndex.NOMBRE !== -1 && row[colIndex.NOMBRE]
+                    ? row[colIndex.NOMBRE].toString().trim()
+                    : "";
+                if (!nombre) continue;
+                if (/^\d{2}-/.test(nombre)) continue; // Ignorar títulos de categoría
+
+                const pr =
+                  colIndex.PROCEDIMIENTO !== -1 && row[colIndex.PROCEDIMIENTO]
+                    ? row[colIndex.PROCEDIMIENTO].toString().trim()
+                    : null;
+                const df =
+                  colIndex.DIAGRAMA_DE_FLUJO !== -1 &&
+                  row[colIndex.DIAGRAMA_DE_FLUJO]
+                    ? row[colIndex.DIAGRAMA_DE_FLUJO].toString().trim()
+                    : null;
+                const vd =
+                  colIndex.VIDEO !== -1 && row[colIndex.VIDEO]
+                    ? row[colIndex.VIDEO].toString().trim()
+                    : null;
+                const descripcion =
+                  colIndex.DESCRIPCION !== -1 && row[colIndex.DESCRIPCION]
+                    ? row[colIndex.DESCRIPCION].toString().trim()
+                    : null;
+                let categoria =
+                  colIndex.CATEGORIA !== -1 && row[colIndex.CATEGORIA]
+                    ? row[colIndex.CATEGORIA].toString().trim()
+                    : "Sin categoría";
+
+                const datos = {
+                  PR: pr && pr !== "null" ? pr : null,
+                  DF: df && df !== "null" ? df : null,
+                  VD: vd && vd !== "null" ? vd : null,
+                  DESCRIPCION:
+                    descripcion && descripcion !== "null" ? descripcion : null,
+                };
+
+                // Guardar en índice agrupado
+                if (!indice[categoria]) indice[categoria] = {};
+                indice[categoria][nombre] = datos;
+
+                // Guardar en lista plana para búsqueda
+                procesos.push({
+                  nombre: nombre,
+                  descripcion: datos.DESCRIPCION,
+                  categoria: categoria,
+                  PR: datos.PR,
+                  DF: datos.DF,
+                  VD: datos.VD,
+                });
+              }
+
+              return { indice, procesos };
+            });
+        }
+
+        // Inicio de la aplicación
+        cargarIndice()
+          .then(({ indice, procesos }) => {
+            if (searchTerm) {
+              // Modo búsqueda
+              const terminoLower = searchTerm.toLowerCase();
+              const resultados = procesos.filter((p) => {
+                const nombreMatch = p.nombre
+                  .toLowerCase()
+                  .includes(terminoLower);
+                const descMatch =
+                  p.descripcion &&
+                  p.descripcion.toLowerCase().includes(terminoLower);
+                return nombreMatch || descMatch;
+              });
+              mostrarResultados(searchTerm, resultados);
+            } else if (id) {
+              // Modo detalle de proceso
+              let procesoEncontrado = null;
+              let categoriaEncontrada = null;
+              let subcategoriaEncontrada = null;
+
+              for (const [categoria, subcategorias] of Object.entries(indice)) {
+                for (const [subcategoria, datos] of Object.entries(
+                  subcategorias,
+                )) {
+                  for (const campo of ["PR", "DF", "VD"]) {
+                    const valor = datos[campo];
+                    if (
+                      valor &&
+                      typeof valor === "string" &&
+                      valor.endsWith(id)
+                    ) {
+                      procesoEncontrado = datos;
+                      categoriaEncontrada = categoria;
+                      subcategoriaEncontrada = subcategoria;
+                      break;
+                    }
+                  }
+                  if (procesoEncontrado) break;
+                }
+                if (procesoEncontrado) break;
+              }
+
+              if (!procesoEncontrado) {
+                mostrarError(
+                  `No se encontró ningún proceso con el ID "${id}".`,
+                );
+                return;
+              }
+
+              actualizarPagina(
+                procesoEncontrado,
+                categoriaEncontrada,
+                subcategoriaEncontrada,
+                indice,
+              );
+            } else {
+              // Sin parámetros: mostrar un mensaje por defecto
+              document.getElementById("videoTitle").textContent =
+                "Centro de Ayuda";
+              document.getElementById("videoDescription").textContent =
+                "Utiliza el buscador para encontrar un proceso o accede desde un enlace directo.";
+              document.getElementById("videoWrapper").innerHTML =
+                `<video controls autoplay><source src="https://www.pronamexsacv.com.mx/Videos/placeholder_Ayuda.mp4" type="video/mp4"></video>`;
+              document.getElementById("downloadSection").innerHTML = "";
+              document.getElementById("relatedContainer").innerHTML =
+                "<p>Ingresa un término en el buscador.</p>";
+            }
+          })
+          .catch((error) => {
+            console.error(error);
+            mostrarError("Error al cargar los datos. Intenta más tarde.");
+          });
+
+        function actualizarPagina(
+          datos,
+          categoria,
+          subcategoria,
+          indiceCompleto,
+        ) {
+          // Asegurar que los elementos de video sean visibles
+          const videoWrapper = document.getElementById("videoWrapper");
+          const videoInfo = document.querySelector(".video-info");
+          if (videoWrapper) videoWrapper.style.display = "";
+          if (videoInfo) videoInfo.style.display = "";
+
+          // Título y descripción
+          document.getElementById("videoTitle").textContent = subcategoria;
+          document.getElementById("videoDescription").textContent =
+            datos.DESCRIPCION || "Sin descripción disponible.";
+
+          // Video
+          const wrapper = document.getElementById("videoWrapper");
+          let videoSrc = "";
+          if (
+            datos.VD &&
+            datos.VD !== "null" &&
+            datos.VD.trim() !== "" &&
+            datos.VD !== "P"
+          ) {
+            if (datos.VD.endsWith(".mp4")) {
+              videoSrc = `https://www.pronamexsacv.com.mx/Videos/${datos.VD}`;
+            } else {
+              videoSrc = `https://www.pronamexsacv.com.mx/Videos/${datos.VD} ${subcategoria}.mp4`;
+            }
+          } else {
+            videoSrc =
+              "https://www.pronamexsacv.com.mx/Videos/placeholder_Ayuda.mp4";
+          }
+          const videoElement = document.createElement("video");
+          videoElement.controls = true;
+          videoElement.autoplay = true;
+          videoElement.muted = true;
+          videoElement.playsInline = true;
+          const source = document.createElement("source");
+          source.src = videoSrc;
+          source.type = "video/mp4";
+          source.onerror = function () {
+            console.warn(
+              "Video no encontrado, cargando placeholder:",
+              videoSrc,
+            );
+            source.src =
+              "https://www.pronamexsacv.com.mx/Videos/placeholder_Ayuda.mp4";
+            videoElement.load();
+          };
+          videoElement.appendChild(source);
+          wrapper.innerHTML = "";
+          wrapper.appendChild(videoElement);
+
+          // Descargas
+          const downloadSection = document.getElementById("downloadSection");
+          downloadSection.innerHTML = "";
+
+          function crearBoton(tipo, codigo, icono, texto) {
+            if (
+              !codigo ||
+              codigo === "null" ||
+              codigo.trim() === "" ||
+              codigo === "P"
+            )
+              return null;
+            const link = document.createElement("a");
+            link.href = `https://www.pronamexsacv.com.mx/Documentos/${codigo} ${subcategoria}.pdf`;
+            link.className = "file-card";
+            link.innerHTML = `<i class="fas ${icono}"></i><div><strong>${texto}</strong></div>`;
+            return link;
+          }
+
+          const botones = [
+            crearBoton("PR", datos.PR, "fa-file-pdf", "Procedimiento"),
+            crearBoton(
+              "DF",
+              datos.DF,
+              "fa-project-diagram",
+              "Diagrama de Flujo",
+            ),
+            crearBoton("TRIPTICO", null, "fa-columns", "Descargar Tríptico"),
+          ].filter((b) => b !== null);
+
+          if (botones.length === 0) {
+            downloadSection.innerHTML =
+              "<p>No hay documentos disponibles para este proceso.</p>";
+          } else {
+            botones.forEach((b) => downloadSection.appendChild(b));
+          }
+
+          // Videos relacionados (misma categoría)
+          const relatedContainer = document.getElementById("relatedContainer");
+          relatedContainer.innerHTML = "";
+
+          const catTitle = document.createElement("h4");
+          catTitle.textContent = categoria;
+          relatedContainer.appendChild(catTitle);
+
+          const subcategorias = indiceCompleto[categoria] || {};
+          let algunVideo = false;
+
+          for (const [subName, subDatos] of Object.entries(subcategorias)) {
+            if (subName === subcategoria) continue;
+
+            if (
+              subDatos.VD &&
+              subDatos.VD !== "null" &&
+              subDatos.VD.trim() !== "" &&
+              subDatos.VD !== "P"
+            ) {
+              algunVideo = true;
+              let videoId = null;
+              if (!subDatos.VD.endsWith(".mp4")) {
+                const match = subDatos.VD.match(/\d{2}-\d{3}/);
+                if (match) videoId = match[0];
+              }
+              if (!videoId) continue;
+
+              const card = document.createElement("a");
+              card.href = `?id=${videoId}`;
+              card.className = "related-card";
+              const thumbnailUrl =
+                "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARwAAACxCAMAAAAh3/JWAAAAMFBMVEW7u7v+/v64uLjPz8+2trbBwcHx8fH6+vrd3d309PTX19fo6Ojh4eHMzMzFxcXe3t60yZpbAAAChUlEQVR4nO3c3XKDIBCGYcU/1Eju/26rDdsQwI09aDuF9znpTGJn4jfAIopNAwAAAAAAAAAAAAAAAAAAAAAAAAAAAADAzzOfnn8h9jQ2u47z1LbTPK52a8jnwfSDndvIaIeefIxZkmQe5qXy5rNHM+WjOUxVx2M2JZrPeLZa0zHNqkdzWJsq4zHutdmMt2XpumW5ja+Nx1WYjlnCwdc6E3Av5aurLh1jg67j4oF3zyfocraydIJs1iF77mZYK03nmY1Sj/pnLaspHdNdKkZBOato3BnknO+9fmB/lyOH3/llf89ILVreZLOnIzVtrqTpGGkOy4UT/qr49zrScf50b5dO19xq6ljGz4DHi03hu8f/ay7bElx+tnOQ4dv9+E/7c9IQXgecvbifVmsZdipoOi5bfY6Zz+kYJNWt+KYj42uXhtOOJ11L5ozXRvB/zEzZaYs//y4/8fFNZyo9HJef4uiNQ0adwvuVTACTz+Vqa852raGKiaCvVUnheV6KZrvW2b+VxTwCSJYggnByXUuWOMoOx/ePLf48DCfXtbYKLiEkg9MvpGvF6Qwnn5fEl520JkfhJF3L5ItcUfzYkS7OxOHEXctPj4peLvXz47TqJOFEXciXq6LnyN8Jp+3C7wmn8pbDmHOOaqWQDJLJHPOchhmyimsrBVflClnPifsH6zkHVgIVb9aQT1bYK1lD5u6DhvtWCu54arhXruApCw3P5yh4skvDM4EaniZV8ByyJnyC/bTxBLuxil4BTLD3QcOuGQ37rTTpTj177NSz7NQ7sMdTxe5gDfvKVbyRQHW8y2KMk+FdFl94C4qO9+cAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH7dB/ryExSSkYZUAAAAAElFTkSuQmCC";
+              card.innerHTML = `
+                    <div class="thumb-mini" style="background: url('${thumbnailUrl}') center/cover;"></div>
+                    <div class="related-info">
+                        <h4>${subName}</h4>
+                    </div>
+                `;
+              relatedContainer.appendChild(card);
+            }
+          }
+
+          if (!algunVideo) {
+            relatedContainer.innerHTML +=
+              "<p>No hay videos en esta categoría.</p>";
+          }
+        }
+
+        // Configurar el buscador
+        const searchBox = document.getElementById("searchBox");
+        const searchBtn = document.getElementById("searchBtn");
+        const searchInput = document.getElementById("searchInput");
+
+        function realizarBusqueda() {
+          const termino = searchInput.value.trim();
+          if (termino !== "") {
+            window.location.href = `?search=${encodeURIComponent(termino)}`;
+          } else {
+            // Si está vacío, solo quita la clase activa
+            searchBox.classList.remove("active");
+          }
+        }
+
+        searchBtn.addEventListener("click", (e) => {
+          if (!searchBox.classList.contains("active")) {
+            searchBox.classList.add("active");
+            searchInput.focus();
+            e.preventDefault();
+          } else {
+            realizarBusqueda();
+          }
+        });
+
+        searchInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") {
+            realizarBusqueda();
+          }
+        });
+
+        document.addEventListener("click", (e) => {
+          if (!searchBox.contains(e.target)) {
+            searchBox.classList.remove("active");
+          }
+        });
+
+        // Si hay un término de búsqueda en la URL, ponerlo en el input
+        if (searchTerm) {
+          searchInput.value = searchTerm;
+          searchBox.classList.add("active");
+        }
+      })();
