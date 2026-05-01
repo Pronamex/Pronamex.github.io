@@ -313,8 +313,13 @@
               codigo === "P"
             )
               return null;
+
             const link = document.createElement("a");
             link.href = `https://www.pronamexsacv.com.mx/Documentos/${codigo} ${subcategoria}.pdf`;
+
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+
             link.className = "file-card";
             link.innerHTML = `<i class="fas ${icono}"></i><div><strong>${texto}</strong></div>`;
             return link;
