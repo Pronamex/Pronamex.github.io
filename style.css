@@ -254,3 +254,68 @@
                 grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             }
         }
+
+        /* --- Media Queries adicionales para optimización móvil --- */
+
+/* Ajustes para Tablets (Pantallas menores a 1024px) */
+@media (max-width: 1024px) {
+    .container {
+        grid-template-columns: 1fr; /* Apilamos contenido principal y sidebar */
+        padding: 0 1.5rem;
+    }
+
+    .sidebar {
+        max-height: none; /* Quitamos el scroll interno para mejorar el scroll natural del móvil */
+        overflow: visible;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Reorganizamos las noticias y videos en cuadrícula */
+        gap: 1.5rem;
+    }
+}
+
+/* Ajustes para dispositivos móviles (Pantallas menores a 768px) */
+@media (max-width: 768px) {
+    header {
+        flex-direction: column; /* Apilamos logo y buscador para ganar espacio[cite: 2] */
+        padding: 1rem;
+        gap: 1rem;
+    }
+
+    .search-box.active {
+        width: 100%; /* El buscador expandido ocupa todo el ancho disponible[cite: 2] */
+    }
+
+    .video-info h1 {
+        font-size: 1.5rem; /* Reducimos el tamaño del título para legibilidad[cite: 2] */
+    }
+
+    .download-section {
+        grid-template-columns: 1fr; /* Botones de descarga en una sola columna para facilitar el "tap"[cite: 2] */
+    }
+}
+
+/* Ajustes para móviles pequeños (Pantallas menores a 480px) */
+@media (max-width: 480px) {
+    .logo span {
+        display: none; /* Ocultamos el texto "Ayuda" para simplificar la interfaz[cite: 1] */
+    }
+
+    .video-info {
+        padding: 1rem; /* Reducimos el padding interno[cite: 2] */
+    }
+
+    .related-card {
+        flex-direction: column; /* Las tarjetas de videos relacionados se vuelven verticales[cite: 2] */
+        align-items: flex-start;
+    }
+
+    .thumb-mini {
+        width: 100%; /* La miniatura ocupa todo el ancho de la tarjeta[cite: 2] */
+        height: auto;
+        aspect-ratio: 16 / 9;
+    }
+
+    .file-card {
+        padding: 1rem; /* Ajustamos el espacio en los recursos de descarga[cite: 2] */
+    }
+}
