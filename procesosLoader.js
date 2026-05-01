@@ -66,7 +66,7 @@
 
         // Cargar y parsear el archivo Excel (devuelve una promesa con el índice plano)
         function cargarIndice() {
-          return fetch("https://pronamex.github.io/IndiceProcesosSICA.xlsx");
+          return fetch("https://pronamex.github.io/IndiceProcesosSICA.xlsx")
             .then((response) => {
               if (!response.ok)
                 throw new Error("No se pudo cargar el archivo Excel");
@@ -396,14 +396,21 @@
           }
         }
 
+        // Reemplaza el event listener actual del searchBtn por este:
         searchBtn.addEventListener("click", (e) => {
-          if (!searchBox.classList.contains("active")) {
-            searchBox.classList.add("active");
-            searchInput.focus();
             e.preventDefault();
-          } else {
-            realizarBusqueda();
-          }
+            const termino = searchInput.value.trim();
+            
+            // Si el usuario ya escribió algo, buscar inmediatamente
+            if (termino !== "") {
+                realizarBusqueda();
+            } else {
+                // Si está vacío, asegurar que la caja se active y reciba el foco
+                if (!searchBox.classList.contains("active")) {
+                    searchBox.classList.add("active");
+                }
+                searchInput.focus();
+            }
         });
 
         searchInput.addEventListener("keypress", (e) => {
