@@ -2,7 +2,11 @@
         // Obtener parámetros de la URL
         const urlParams = new URLSearchParams(window.location.search);
         const searchTerm = urlParams.get("search");
-        const id = urlParams.get("id") || urlParams.get("ID");
+        const cat = urlParams.get("Cat");
+        const cons = urlParams.get("Cons");
+        
+        // Construimos el 'id' uniendo Cat y Cons. Se deja el fallback a 'id' por si hay URLs antiguas vivas.
+        const id = (cat && cons) ? `${cat}-${cons}` : (urlParams.get("id") || urlParams.get("ID"));
 
         // Función para mostrar errores
         function mostrarError(mensaje) {
@@ -50,7 +54,9 @@
             idEnlace = match[0];
 
             const card = document.createElement("a");
-            card.href = `?id=${idEnlace}`;
+            // Separar el código para armar la nueva URL
+            const partesEnlace = idEnlace.split('-');
+            card.href = `?Cat=${partesEnlace[0]}&Cons=${partesEnlace[1]}`;
             card.className = "related-card"; // Reutilizamos el estilo de las tarjetas relacionadas
             card.style.marginBottom = "10px";
             card.innerHTML = `
@@ -361,7 +367,9 @@
               if (!videoId) continue;
 
               const card = document.createElement("a");
-              card.href = `?id=${videoId}`;
+              // Separar el ID del video relacionado para la URL
+              const partesVideo = videoId.split('-');
+              card.href = `?Cat=${partesVideo[0]}&Cons=${partesVideo[1]}`;
               card.className = "related-card";
               const thumbnailUrl =
                 "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARwAAACxCAMAAAAh3/JWAAAAMFBMVEW7u7v+/v64uLjPz8+2trbBwcHx8fH6+vrd3d309PTX19fo6Ojh4eHMzMzFxcXe3t60yZpbAAAChUlEQVR4nO3c3XKDIBCGYcU/1Eju/26rDdsQwI09aDuF9znpTGJn4jfAIopNAwAAAAAAAAAAAAAAAAAAAAAAAAAAAADAzzOfnn8h9jQ2u47z1LbTPK52a8jnwfSDndvIaIeefIxZkmQe5qXy5rNHM+WjOUxVx2M2JZrPeLZa0zHNqkdzWJsq4zHutdmMt2XpumW5ja+Nx1WYjlnCwdc6E3Av5aurLh1jg67j4oF3zyfocraydIJs1iF77mZYK03nmY1Sj/pnLaspHdNdKkZBOato3BnknO+9fmB/lyOH3/llf89ILVreZLOnIzVtrqTpGGkOy4UT/qr49zrScf50b5dO19xq6ljGz4DHi03hu8f/ay7bElx+tnOQ4dv9+E/7c9IQXgecvbifVmsZdipoOi5bfY6Zz+kYJNWt+KYj42uXhtOOJ11L5ozXRvB/zEzZaYs//y4/8fFNZyo9HJef4uiNQ0adwvuVTACTz+Vqa852raGKiaCvVUnheV6KZrvW2b+VxTwCSJYggnByXUuWOMoOx/ePLf48DCfXtbYKLiEkg9MvpGvF6Qwnn5fEl520JkfhJF3L5ItcUfzYkS7OxOHEXctPj4peLvXz47TqJOFEXciXq6LnyN8Jp+3C7wmn8pbDmHOOaqWQDJLJHPOchhmyimsrBVflClnPifsH6zkHVgIVb9aQT1bYK1lD5u6DhvtWCu54arhXruApCw3P5yh4skvDM4EaniZV8ByyJnyC/bTxBLuxil4BTLD3QcOuGQ37rTTpTj177NSz7NQ7sMdTxe5gDfvKVbyRQHW8y2KMk+FdFl94C4qO9+cAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH7dB/ryExSSkYZUAAAAAElFTkSuQmCC";
